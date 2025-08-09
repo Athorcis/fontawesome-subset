@@ -9,6 +9,7 @@ import {
     FAFamilyMetaType,
     FAIconType,
     FontAwesomeOptions,
+    FontFileExtension,
     IconFamilyYAML,
     IconYAML,
     Subset,
@@ -16,7 +17,7 @@ import {
 } from "./types";
 import subsetFont from "subset-font";
 import yaml from "yaml";
-import { addIconError, findIconByName, iconHasStyle } from "./utils";
+import { addIconError, detectFontFileExtension, findIconByName, iconHasStyle } from "./utils";
 import { OUTPUT_FORMAT_MAP, STYLE_FONT_MAP } from "./constants";
 
 /**
@@ -32,7 +33,11 @@ function fontawesomeSubset(
     outputDir: string,
     options: FontAwesomeOptions = {}
 ) {
-    const { package: packageType = "free", targetFormats = ["woff2", "sfnt"] } = options;
+    const {
+        package: packageType = "free",
+        targetFormats = ["woff2", "sfnt"],
+        fontFileExtension: userFontFileExtension,
+    } = options;
     // Maps style to actual font name / file name.
     const fontTypes = Object.keys(STYLE_FONT_MAP);
     let packageLocation: string;
@@ -63,6 +68,9 @@ function fontawesomeSubset(
         subset = { solid: subset };
     }
 
+    const fontFileExtension: FontFileExtension =
+        userFontFileExtension ?? detectFontFileExtension(packageLocation);
+
     const iconMeta = yaml.parse(readFileSync(fontMeta, "utf8")) as IconYAML;
     const iconFamilyMeta = existsSync(fontFamilyMeta)
         ? (yaml.parse(readFileSync(fontFamilyMeta, "utf8")) as IconFamilyYAML)
@@ -85,7 +93,7 @@ function fontawesomeSubset(
 
         const fontFamily = key as keyof typeof STYLE_FONT_MAP;
         const fontFileName = STYLE_FONT_MAP[fontFamily];
-        const fontFilePath = resolve(fontFiles, `./${fontFileName}.ttf`);
+        const fontFilePath = resolve(fontFiles, `./${fontFileName}.${fontFileExtension}`);
 
         if (!existsSync(resolve(fontFilePath))) {
             console.warn(

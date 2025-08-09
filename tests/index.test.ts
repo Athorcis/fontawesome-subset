@@ -1,10 +1,11 @@
 import subsetFont from "subset-font";
 import fs, { existsSync, readFileSync } from "fs";
-import { loadSync } from "opentype.js";
+import { loadSync, parse } from "opentype.js";
 import { createTempDir, itFree, itGTE, itPro, PACKAGE, SEP } from "./test-utils";
 import { fontawesomeSubset, SubsetOption } from "../src";
 import yaml from "yaml";
-import { findIconByName } from "../src/utils";
+import { detectFontFileExtension, findIconByName } from "../src/utils";
+import wawoff2 from "wawoff2";
 
 jest.mock("subset-font", () => ({
     __esModule: true,
@@ -35,9 +36,22 @@ describe("fontawesomeSubset", () => {
 
         const tempDir = await createTempDir();
         await fontawesomeSubset(subsets, tempDir, { package: PACKAGE });
+        const fontFileExtension = detectFontFileExtension(
+            require.resolve(`@fortawesome/fontawesome-${PACKAGE}`)
+        );
 
         for (const expectation of expected) {
-            const font = loadSync(`${tempDir}${SEP}${expectation.family}.ttf`);
+            let font;
+            const fontFilePath = `${tempDir}${SEP}${expectation.family}.${fontFileExtension}`;
+
+            if (fontFileExtension === "ttf") {
+                font = loadSync(fontFilePath);
+            } else {
+                font = parse(
+                    Uint8Array.from(await wawoff2.decompress(readFileSync(fontFilePath))).buffer
+                );
+            }
+
             const icon = findIconByName(IconYAML, expectation.icon);
             const glyphIndex = icon
                 ? font.charToGlyphIndex(String.fromCodePoint(parseInt(icon?.unicode, 16)))

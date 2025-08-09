@@ -3,12 +3,15 @@ import {
     FAFamilyType,
     FAIconType,
     FAStyleType,
+    FontFileExtension,
     IconFamilyYAML,
     IconYAML,
     PackageType,
     Subset,
 } from "./types";
 import { SUBSET_FAMILY_MAP, SUBSET_STYLE_MAP } from "./constants";
+import { resolve } from "path";
+import { readFileSync } from "fs";
 
 export function findIconByName(yaml: IconYAML, iconNameOrAlias: string): FAIconType | undefined;
 export function findIconByName(
@@ -93,3 +96,15 @@ export const getFamilyMetaBySubset = (
     family: SUBSET_FAMILY_MAP[subset],
     style: SUBSET_STYLE_MAP[subset],
 });
+
+/**
+ * Detect FontAwesome's font file extension
+ *
+ * @param packageLocation
+ */
+export function detectFontFileExtension(packageLocation: string): FontFileExtension {
+    const packageJson = resolve(packageLocation, "../../package.json");
+    const packageData = JSON.parse(readFileSync(packageJson, "utf8"));
+    const pkgMajorVersion = packageData.version.replace(/^(\d+)\..+$/, "$1");
+    return pkgMajorVersion < 7 ? "ttf" : "woff2";
+}

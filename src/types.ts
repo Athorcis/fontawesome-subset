@@ -7,6 +7,10 @@ export interface FontAwesomeOptions {
      * Requested font output targets.
      */
     targetFormats?: TargetFormat[];
+    /**
+     * The extension of the input font files.
+     */
+    fontFileExtension?: FontFileExtension;
 }
 
 export type PackageType = "free" | "pro";
@@ -35,6 +39,8 @@ export type GlyphName = string;
 export type SubsetOption = GlyphName[] | Partial<Record<Subset, GlyphName[]>>;
 
 export type TargetFormat = "woff" | "woff2" | "sfnt";
+
+export type FontFileExtension = "ttf" | "woff2";
 
 /**
  * Type of individual result / item inside the YAML file.
